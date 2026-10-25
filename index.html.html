@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ATLAS – Solo vs Computer</title>
+<style>
+:root{--bg:#f6f4ee;--fg:#1d2430;--mut:#6b7380;--card:#fff;--bd:#dcd8cc;--p0:#1f6f5c;--p1:#c2563a;--warn:#b3261e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181f;--fg:#e8eaee;--mut:#98a1ae;--card:#1e242d;--bd:#313945;--p0:#4fc3a1;--p1:#f08a6c;--warn:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14181f;--fg:#e8eaee;--mut:#98a1ae;--card:#1e242d;--bd:#313945;--p0:#4fc3a1;--p1:#f08a6c;--warn:#ff8a80;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:460px;margin:0 auto;padding:16px}
+h1{margin:8px 0 4px;letter-spacing:.2em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px}
+button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;cursor:pointer}
+button.pri{background:var(--p0);color:var(--bg);border-color:var(--p0);font-weight:600}
+button:disabled{opacity:.4;cursor:default}
+.mut{color:var(--mut);font-size:14px}
+.big{display:block;width:100%;text-align:left;margin:8px 0}
+.row{display:flex;gap:8px;margin:8px 0}.row>*{flex:1}
+.pls{display:flex;gap:8px}.pl{flex:1;position:relative;border-width:2px}
+.pl.on{border-color:var(--fg)}.pl b{display:block}
+#h0,#h1{font-size:20px;letter-spacing:2px}#h0{color:var(--p0)}#h1{color:var(--p1)}
+.bub{position:absolute;right:8px;top:6px;font-size:26px}
+#letter{font-size:88px;font-weight:800;text-align:center;line-height:1;margin:10px 0 0}
+#sub{text-align:center;min-height:22px}
+.bar{height:8px;background:var(--bd);border-radius:6px;overflow:hidden;margin:8px 0 2px}
+#bar{display:block;height:100%;background:var(--fg);width:100%}
+#tm{text-align:right;font-variant-numeric:tabular-nums}
+#in{width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}
+#msg{min-height:22px;color:var(--warn);font-weight:600}
+#log{font-size:14px;color:var(--mut);min-height:60px;margin-top:8px}#log div:last-child{color:var(--fg);font-weight:600}
+#used{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:13px;padding:3px 9px;border-radius:99px;border:1px solid}
+.c0{color:var(--p0);border-color:var(--p0)}.c1{color:var(--p1);border-color:var(--p1)}
+#emo{display:flex;gap:6px;justify-content:center;margin-top:10px}#emo button{padding:6px 10px;font-size:20px}
+#pn{width:100%;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--fg)}#avs{display:flex;flex-wrap:wrap;gap:6px}#avs button{font-size:24px;padding:4px 8px}#avs button.on{border:2px solid var(--p0)}.st{display:grid;grid-template-columns:1fr 1fr;gap:8px}.st b{display:block;font-size:22px}#end{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px}
+#map{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;color:var(--fg)}main{position:relative;z-index:1}</style></head><body><svg id="map" preserveAspectRatio="xMidYMid meet"></svg><main>
+<section id="menu">
+<h1>ATLAS</h1><p class="mut">Name a place that starts with the last letter of the previous one. No repeats. Lose all your lives and you’re out.</p>
+<div class="card" id="pcard" onclick="showProf()" style="cursor:pointer;margin-bottom:10px"></div>
+<div class="card"><b>Solo vs Computer</b>
+<button class="big pri" onclick="start('india')">Country: India · 3 lives</button>
+<button class="big" onclick="start('world')">World: countries, capitals, rivers, mountains · 5 lives</button></div>
+<div class="card" style="margin-top:10px"><b>Rules in this build</b>
+<ul class="mut" style="padding-left:18px;margin:6px 0">
+<li>15 s per turn, 0.5 s shorter every 3 rounds (floor 6 s).</li>
+<li>Lose a life on timeout, Pass, or 3 wrong tries.</li>
+<li>Pass → opponent gets a 6 s steal window (2 tries, +1 life).</li>
+<li>Call Discussion once per match: Bot votes. A dead letter is cancelled free; a live one makes Bot answer or lose a life.</li>
+<li>Cancelled letters are skipped: if a place ends in a cancelled letter, the next letter is the one before it (Namibia with A cancelled → I).</li><li>Max lives = start + 1. Leaving the tab twice on your turn forfeits it.</li></ul></div>
+</section>
+<section id="prof" hidden><h2>Profile</h2>
+<div class="card"><div id="avs"></div><input id="pn" maxlength="16" placeholder="Your name" autocomplete="off" style="margin-top:10px"></div>
+<div class="card" id="pst" style="margin-top:10px"></div>
+<div class="row"><button class="pri" onclick="menu()">Done</button><button onclick="resetPF(this)">Reset stats</button></div>
+<p class="mut">Saved on this device only. Sign-in and online ratings come with the server.</p></section>
+<section id="game" hidden>
+<div class="pls"><div class="card pl" id="c0"><span class="bub" id="b0"></span><b id="n0">You</b><span id="h0"></span></div>
+<div class="card pl" id="c1"><span class="bub" id="b1"></span><b>Bot</b><span id="h1"></span></div></div>
+<div id="log"></div><div id="letter">S</div><div id="sub"></div>
+<span class="bar"><i id="bar"></i></span><div id="tm" class="mut"></div>
+<input id="in" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type a place…" enterkeyhint="go">
+<div id="msg"></div>
+<div class="row"><button class="pri" id="go">Submit</button><button id="pass">Pass</button><button id="disc">Discussion</button></div>
+<div class="mut" id="rd"></div><div id="used"></div>
+<div id="emo"></div>
+<p><button onclick="menu()">← Menu</button></p>
+</section>
+<div id="end" hidden><div class="card" style="max-width:340px;width:100%"><h2 id="et" style="margin:0 0 6px"></h2><p id="es" class="mut"></p>
+<div class="row"><button class="pri" onclick="start(cat)">Play again</button><button onclick="menu()">Menu</button></div></div></div>
+</main>
+<script>
+const INDIA="Andhra Pradesh;Arunachal Pradesh;Assam;Bihar;Chhattisgarh;Goa;Gujarat;Haryana;Himachal Pradesh;Jharkhand;Karnataka;Kerala;Madhya Pradesh;Maharashtra;Manipur;Meghalaya;Mizoram;Nagaland;Odisha|Orissa;Punjab;Rajasthan;Sikkim;Tamil Nadu;Telangana;Tripura;Uttar Pradesh;Uttarakhand|Uttaranchal;West Bengal;Andaman and Nicobar Islands|Andaman and Nicobar;Chandigarh;Dadra and Nagar Haveli and Daman and Diu;Delhi|New Delhi;Jammu and Kashmir;Ladakh;Lakshadweep;Puducherry|Pondicherry;Amaravati;Itanagar;Dispur;Patna;Raipur;Panaji|Panjim;Gandhinagar;Shimla;Ranchi;Bengaluru|Bangalore;Thiruvananthapuram|Trivandrum;Bhopal;Mumbai|Bombay;Imphal;Shillong;Aizawl;Kohima;Bhubaneswar;Jaipur;Gangtok;Chennai|Madras;Hyderabad;Agartala;Lucknow;Dehradun;Kolkata|Calcutta;Port Blair;Kavaratti;Srinagar;Leh;Jammu;Ahmedabad;Surat;Pune;Kanpur;Nagpur;Indore;Thane;Visakhapatnam;Vadodara;Ghaziabad;Ludhiana;Agra;Nashik;Faridabad;Meerut;Rajkot;Varanasi;Amritsar;Prayagraj|Allahabad;Coimbatore;Madurai;Jodhpur;Guwahati;Mysuru|Mysore;Jabalpur;Gwalior;Vijayawada;Kochi|Cochin;Kozhikode|Calicut;Udaipur;Ajmer;Kota;Bikaner;Haridwar;Rishikesh;Mangaluru|Mangalore;Jamshedpur;Dhanbad;Aurangabad;Solapur;Noida;Gurugram|Gurgaon;Cuttack;Puri;Siliguri;Darjeeling;Tirupati;Salem;Tiruchirappalli|Trichy;Warangal;Jalandhar;Bareilly;Aligarh;Gorakhpur;Ujjain;Panipat;Bhilai;Nellore;Guntur;Belagavi|Belgaum;Hubballi|Hubli;Thrissur;Kollam;Alappuzha;Ooty;Pathankot;Jaisalmer;Pushkar;Bodh Gaya;Kanchipuram;Rourkela;Sambalpur;Yamunanagar";
+const WORLD="Afghanistan;Albania;Algeria;Andorra;Angola;Antigua and Barbuda;Argentina;Armenia;Australia;Austria;Azerbaijan;Bahamas;Bahrain;Bangladesh;Barbados;Belarus;Belgium;Belize;Benin;Bhutan;Bolivia;Bosnia and Herzegovina;Botswana;Brazil;Brunei;Bulgaria;Burkina Faso;Burundi;Cabo Verde|Cape Verde;Cambodia;Cameroon;Canada;Central African Republic;Chad;Chile;China;Colombia;Comoros;Congo;Costa Rica;Côte d’Ivoire|Ivory Coast;Croatia;Cuba;Cyprus;Czechia|Czech Republic;Denmark;Djibouti;Dominica;Dominican Republic;Ecuador;Egypt;El Salvador;Equatorial Guinea;Eritrea;Estonia;Eswatini|Swaziland;Ethiopia;Fiji;Finland;France;Gabon;Gambia;Georgia;Germany;Ghana;Greece;Grenada;Guatemala;Guinea;Guinea-Bissau;Guyana;Haiti;Honduras;Hungary;Iceland;India;Indonesia;Iran;Iraq;Ireland;Israel;Italy;Jamaica;Japan;Jordan;Kazakhstan;Kenya;Kiribati;Kuwait;Kyrgyzstan;Laos;Latvia;Lebanon;Lesotho;Liberia;Libya;Liechtenstein;Lithuania;Luxembourg;Madagascar;Malawi;Malaysia;Maldives;Mali;Malta;Marshall Islands;Mauritania;Mauritius;Mexico;Micronesia;Moldova;Monaco;Mongolia;Montenegro;Morocco;Mozambique;Myanmar|Burma;Namibia;Nauru;Nepal;Netherlands|Holland;New Zealand;Nicaragua;Niger;Nigeria;North Korea;North Macedonia|Macedonia;Norway;Oman;Pakistan;Palau;Panama;Papua New Guinea;Paraguay;Peru;Philippines;Poland;Portugal;Qatar;Romania;Russia;Rwanda;Saint Kitts and Nevis;Saint Lucia;Saint Vincent and the Grenadines;Samoa;San Marino;Sao Tome and Principe;Saudi Arabia;Senegal;Serbia;Seychelles;Sierra Leone;Singapore;Slovakia;Slovenia;Solomon Islands;Somalia;South Africa;South Korea;South Sudan;Spain;Sri Lanka;Sudan;Suriname;Sweden;Switzerland;Syria;Tajikistan;Tanzania;Thailand;Timor-Leste|East Timor;Togo;Tonga;Trinidad and Tobago;Tunisia;Turkey|Turkiye;Turkmenistan;Tuvalu;Uganda;Ukraine;United Arab Emirates|UAE;United Kingdom|UK|Britain;United States|USA|America;Uruguay;Uzbekistan;Vanuatu;Vatican City;Venezuela;Vietnam;Yemen;Zambia;Zimbabwe";
+const WORLD2="Kabul;Tirana;Algiers;Andorra la Vella;Luanda;Buenos Aires;Yerevan;Canberra;Vienna;Baku;Nassau;Manama;Dhaka;Bridgetown;Minsk;Brussels;Belmopan;Porto-Novo;Thimphu;La Paz|Sucre;Sarajevo;Gaborone;Brasilia;Bandar Seri Begawan;Sofia;Ouagadougou;Praia;Phnom Penh;Yaounde;Ottawa;Bangui;N’Djamena;Santiago;Beijing|Peking;Bogota;Moroni;Brazzaville;San Jose;Yamoussoukro;Zagreb;Havana;Nicosia;Prague;Copenhagen;Roseau;Santo Domingo;Quito;Cairo;San Salvador;Malabo;Asmara;Tallinn;Mbabane;Addis Ababa;Suva;Helsinki;Paris;Libreville;Banjul;Tbilisi;Berlin;Accra;Athens;Saint George’s;Conakry;Bissau;Georgetown;Port-au-Prince;Tegucigalpa;Budapest;Reykjavik;Jakarta;Tehran;Baghdad;Dublin;Jerusalem;Rome;Kingston;Tokyo;Amman;Astana;Nairobi;Tarawa;Kuwait City;Bishkek;Vientiane;Riga;Beirut;Maseru;Monrovia;Tripoli;Vaduz;Vilnius;Antananarivo;Lilongwe;Kuala Lumpur;Male;Bamako;Valletta;Majuro;Nouakchott;Port Louis;Mexico City;Palikir;Chisinau;Ulaanbaatar;Podgorica;Rabat;Maputo;Naypyidaw;Windhoek;Yaren;Kathmandu;Amsterdam;Wellington;Managua;Niamey;Abuja;Pyongyang;Skopje;Oslo;Muscat;Islamabad;Ngerulmud;Panama City;Port Moresby;Asuncion;Lima;Manila;Warsaw;Lisbon;Doha;Bucharest;Moscow;Kigali;Basseterre;Castries;Kingstown;Apia;Sao Tome;Riyadh;Dakar;Belgrade;Victoria;Freetown;Bratislava;Ljubljana;Honiara;Mogadishu;Pretoria|Cape Town;Seoul;Juba;Madrid;Colombo;Khartoum;Paramaribo;Stockholm;Bern;Damascus;Dushanbe;Dodoma;Bangkok;Dili;Lome;Nukualofa;Port of Spain;Tunis;Ankara;Ashgabat;Funafuti;Kampala;Kyiv|Kiev;Abu Dhabi;London;Washington|Washington DC;Montevideo;Tashkent;Port Vila;Caracas;Hanoi;Sanaa;Lusaka;Harare;Nile;Amazon;Yangtze|Chang Jiang;Mississippi;Yenisei;Yellow River|Huang He;Ob;Parana;Congo River;Amur;Lena;Mekong;Mackenzie;Niger River;Murray;Volga;Danube;Ganges|Ganga;Indus;Brahmaputra;Euphrates;Tigris;Zambezi;Orinoco;Rhine;Seine;Thames;Elbe;Loire;Tagus;Ebro;Dnieper;Don;Ural River;Irrawaddy;Salween;Yamuna;Godavari;Krishna;Kaveri|Cauvery;Narmada;Mahanadi;Colorado River;Rio Grande;Missouri;Ohio River;Yukon;Saint Lawrence;Limpopo;Orange River;Senegal River;Volta;Jordan River;Oder;Vistula;Po;Rhone;Tiber;Neva;Sutlej;Chenab;Jhelum;Ravi;Everest|Mount Everest;K2;Kangchenjunga;Lhotse;Makalu;Cho Oyu;Dhaulagiri;Manaslu;Nanga Parbat;Annapurna;Kilimanjaro;Mont Blanc;Matterhorn;Denali;Aconcagua;Elbrus;Vinson;Fuji|Mount Fuji;Kosciuszko;Mount Kenya;Cotopaxi;Chimborazo;Ararat;Olympus|Mount Olympus;Etna|Mount Etna;Vesuvius;Rainier;Whitney;Logan;Ben Nevis;Snowdon;Triglav;Himalayas;Alps;Andes;Rockies;Urals;Pyrenees;Carpathians;Atlas Mountains;Appalachians;Caucasus;Karakoram;Hindu Kush;Altai;Tian Shan;Zagros;Apennines;Dolomites;Drakensberg;Sierra Nevada;Cascades;Western Ghats;Eastern Ghats;Aravalli;Vindhya;Satpura;Nilgiris;Kunlun";
+const CATS={india:{d:INDIA,l:3},world:{d:WORLD+";"+WORLD2,l:5}};
+const ABC="abcdefghijklmnopqrstuvwxyz",$=q=>document.querySelector(q);
+const norm=s=>s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]/g,"");
+const nm=i=>i?"Bot":"You";
+let P=[],G=null,cat="india",ec=0;
+
+/* ---------- rules engine ---------- */
+function lev1(a,b){if(a===b)return true;if(Math.abs(a.length-b.length)>1)return false;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;if(a.length===b.length)return a.slice(i+1)===b.slice(i+1);if(a.length>b.length)[a,b]=[b,a];return a.slice(i)===b.slice(i+1)}
+function find(raw){const k=norm(raw);if(!k)return null;
+ for(const p of P){const j=p.keys.indexOf(k);if(j>-1)return{p,k}}
+ if(k.length>=5){const m=P.filter(p=>p.keys.some(x=>lev1(x,k)));if(m.length===1)return{p:m[0],k:m[0].keys.find(x=>lev1(x,k))}}
+ return null}
+const avail=l=>P.filter(p=>!p.used&&p.keys.some(k=>k[0]===l)).length;
+const tt=()=>Math.max(6,15-.5*Math.floor((G.round-1)/3));
+function start(c){cat=c;P=CATS[c].d.split(";").map(s=>{const names=s.split("|");return{names,keys:names.map(norm),used:0,bot:Math.random()<.7}});
+ const L=CATS[c].l,pl=()=>({l:L,m:L+1,a:0,p:0,c:1});
+ G={pl:[pl(),pl()],dead:new Set(),cur:0,round:1,pass:0,away:0,over:0,paused:0,log:[],letter:rl()};
+ $("#menu").hidden=1;$("#game").hidden=0;$("#end").hidden=1;$("#used").innerHTML="";$("#log").innerHTML="";drawMap();initAudio();$("#n0").textContent=PF.av+" "+PF.name;
+ say(`Match start. First letter: ${G.letter.toUpperCase()}`);turn(0,"turn")}
+function menu(){if(G)G.over=1;clearTimeout(G&&G.bt);$("#menu").hidden=0;$("#game").hidden=1;$("#end").hidden=1;$("#prof").hidden=1;hdr()}
+function turn(i,ph){if(G.over)return;clearTimeout(G.bt);Object.assign(G,{cur:i,ph,tries:0,max:ph==="steal"?2:3,lim:ph==="turn"?tt():ph==="steal"?6:15});
+ G.dl=Date.now()+G.lim*1000;ui();if(i){think()}else{$("#in").value="";$("#in").focus()}}
+const adv=()=>{const n=1-G.cur;if(!n)G.round++;turn(n,"turn")};
+function hit(i){const p=G.pl[i];p.l--;ui();if(p.l<=0){end(1-i);return false}return true}
+function gain(i){const p=G.pl[i];p.l=Math.min(p.m,p.l+1)}
+function nl(){G.dead.add(G.letter);const a=ABC.split("").filter(l=>avail(l)&&!G.dead.has(l));if(!a.length){end(null);return}G.letter=a[Math.random()*a.length|0];G.pass=0;say(`New letter: ${G.letter.toUpperCase()}`)}
+function submit(i,raw){if(G.over||G.paused||G.cur!==i)return;const r=find(raw);let m="";
+ if(!r)m="Not in the place list";else if(r.k[0]!==G.letter)m="Must start with "+G.letter.toUpperCase();else if(r.p.used)m="Already used";
+ if(m){G.tries++;if(!i)toast(`${m} (${G.tries}/${G.max})`);if(G.tries>=G.max)fail(i,"used all attempts");return}
+ clearTimeout(G.bt);r.p.used=1;G.pl[i].a++;const nmx=r.p.names[r.p.keys.indexOf(r.k)];
+ const c=document.createElement("span");c.className="chip c"+i;c.textContent=nmx;$("#used").prepend(c);dot(r.p,i,nmx);
+ let j=r.k.length-1;while(j>0&&G.dead.has(r.k[j]))j--;const sk=j<r.k.length-1;G.letter=r.k[j];G.pass=0;say(`${nm(i)}: ${nmx} → ${G.letter.toUpperCase()}${sk?" (cancelled letters skipped)":""}`);
+ if(G.ph==="turn")adv();else{gain(i);say(`${nm(i)} gets +1 life`);turn(1-i,"turn")}}
+function fail(i,why){clearTimeout(G.bt);const ph=G.ph;
+ if(ph==="turn"){say(`${nm(i)} ${why||"ran out of time"} (−1 life)`);if(hit(i)){G.pass=0;adv()}}
+ else if(ph==="steal"){say(`${nm(i)} didn’t steal it`);turn(i,"turn")}
+ else{say(`${nm(i)} couldn’t answer (−1 life). Letter cancelled`);if(hit(i)){nl();turn(1-G.caller,"turn")}}}
+function pass(i){if(G.over||G.cur!==i||G.ph!=="turn")return;G.pl[i].p++;say(`${nm(i)} passed (−1 life)`);if(!hit(i))return;G.pass++;
+ if(G.pass>=2){say("Everyone passed. Letter cancelled");nl();turn(1-i,"turn")}else turn(1-i,"steal")}
+function disc(){if(G.over||G.ph!=="turn"||G.cur||!G.pl[0].c)return;G.pl[0].c=0;G.paused=1;G.caller=0;const dead=!avail(G.letter);
+ say(`You called a discussion: no places left with ${G.letter.toUpperCase()}. Bot is voting…`);ui();
+ setTimeout(()=>{if(G.over)return;G.paused=0;if(dead){say("Vote YES: letter cancelled, no life lost");nl();turn(1,"turn")}else{say("Vote NO: Bot must name a place in 15 s");turn(1,"vote")}},1500)}
+function end(w){G.over=1;clearTimeout(G.bt);ui();if(w===null)w=G.pl[0].l>=G.pl[1].l?0:1;rec(w);
+ $("#et").textContent=w?"Bot wins":"You win! 🎉";
+ $("#es").textContent=`Rounds: ${G.round} · You: ${G.pl[0].a} answers, ${G.pl[0].p} passes · Bot: ${G.pl[1].a} answers, ${G.pl[1].p} passes`;$("#end").hidden=0}
+
+/* ---------- computer opponent: limited list, 3-12 s delay, sometimes passes ---------- */
+function think(){const d=Math.min(3+Math.random()*9,G.lim-1.2)*1000;
+ G.bt=setTimeout(()=>{if(G.over||G.paused)return;const o=P.filter(p=>!p.used&&p.bot&&p.keys.some(k=>k[0]===G.letter));
+  if(!o.length||Math.random()<.08){if(G.ph==="turn")pass(1);else fail(1);return}
+  const p=o[Math.random()*o.length|0];submit(1,p.names[p.keys.findIndex(k=>k[0]===G.letter)])},d)}
+
+/* ---------- random start letter, sound, map ---------- */
+const rl=()=>{const a=ABC.split("").filter(l=>avail(l)>=5);return a[Math.random()*a.length|0]};
+let AC;function initAudio(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume()}catch(e){}}
+function beep(){try{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=880;g.gain.value=.15;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.15)}catch(e){}}
+const OUT={india:"68.2,23.7 70,20.9 72.8,19 73.3,15.5 74.8,12.5 76.3,9 77.5,8.1 80.3,10 80.2,13.1 82,16.5 85,19.5 87,21.5 89,22 89,26 92.5,25 94,24 97,27.5 97.3,28.5 92,28 88,27.5 84,28.5 80,30 79,32.5 77,35 75,37 74,34.5 74.5,32.5 74,30 71,28 70,25",world:["-168,66 -140,70 -95,72 -80,68 -62,58 -55,50 -67,44 -76,35 -81,25 -90,29 -97,25 -97,18 -88,16 -83,9 -78,8 -92,14 -105,20 -112,30 -118,34 -124,42 -125,50 -140,60","-78,8 -62,11 -50,0 -35,-6 -40,-22 -48,-26 -58,-38 -65,-45 -68,-54 -75,-50 -73,-37 -71,-18 -81,-5","-10,36 -9,43 -5,48 3,51 8,54 10,58 5,62 15,69 30,71 60,70 100,77 140,72 170,70 180,66 165,60 160,52 140,45 130,35 122,30 120,22 108,18 106,10 100,13 103,1 98,8 93,18 80,15 77,8 73,18 67,25 57,25 50,30 43,13 35,28 36,36 28,36 23,36 15,38 10,44 3,43","-17,21 -10,35 10,37 32,31 43,12 51,12 40,-3 40,-15 35,-25 20,-35 12,-17 9,0 -8,4 -17,14","114,-22 130,-12 142,-11 153,-26 150,-37 138,-35 115,-34","-55,60 -44,60 -20,70 -20,82 -60,82 -70,76"]};
+const XY={};"mumbai:19.1,72.9;bengaluru:13,77.6;chennai:13.1,80.3;kolkata:22.6,88.4;hyderabad:17.4,78.5;jaipur:26.9,75.8;lucknow:26.8,81;bhopal:23.3,77.4;patna:25.6,85.1;ahmedabad:23,72.6;pune:18.5,73.9;surat:21.2,72.8;kanpur:26.4,80.3;nagpur:21.1,79.1;indore:22.7,75.9;agra:27.2,78;varanasi:25.3,83;amritsar:31.6,74.9;jodhpur:26.3,73;udaipur:24.6,73.7;guwahati:26.1,91.7;kochi:10,76.3;thiruvananthapuram:8.5,77;visakhapatnam:17.7,83.3;bhubaneswar:20.3,85.8;ranchi:23.3,85.3;raipur:21.3,81.6;dehradun:30.3,78;shimla:31.1,77.2;srinagar:34.1,74.8;leh:34.2,77.6;gandhinagar:23.2,72.6;imphal:24.8,93.9;shillong:25.6,91.9;aizawl:23.7,92.7;kohima:25.7,94.1;itanagar:27.1,93.6;dispur:26.1,91.8;gangtok:27.3,88.6;agartala:23.8,91.3;panaji:15.5,73.8;amaravati:16.5,80.5;kota:25.2,75.8;madurai:9.9,78.1;coimbatore:11,77;mysuru:12.3,76.6;jaisalmer:26.9,70.9;bikaner:28,73.3;ajmer:26.4,74.6;haridwar:29.9,78.2;puri:19.8,85.8;darjeeling:27,88.3;ooty:11.4,76.7;andhrapradesh:16,80;arunachalpradesh:28,94;assam:26,92;bihar:25.5,85.5;chhattisgarh:21.5,82;goa:15.3,74;gujarat:22.5,72;haryana:29,76;himachalpradesh:31.9,77.2;jharkhand:23.6,85.3;karnataka:14.5,76;kerala:10.5,76.3;madhyapradesh:23.5,78;maharashtra:19.5,76;manipur:24.8,93.9;meghalaya:25.5,91.4;mizoram:23.3,92.8;nagaland:26,94.3;odisha:20.5,84.5;punjab:31,75.3;rajasthan:27,74;sikkim:27.5,88.5;tamilnadu:11,78.5;telangana:17.8,79;tripura:23.8,91.7;uttarpradesh:27,80.5;uttarakhand:30,79;westbengal:23.5,87.8;chandigarh:30.7,76.8;delhi:28.6,77.2;jammuandkashmir:33.5,75;ladakh:34.5,77.5;puducherry:11.9,79.8;afghanistan:33,65;albania:41,20;algeria:28,2;angola:-12,17;argentina:-34,-64;armenia:40,45;australia:-25,134;austria:47,14;azerbaijan:40,48;bahamas:25,-77;bahrain:26,50;bangladesh:24,90;belarus:53,28;belgium:51,4;belize:17,-88;benin:9,2;bhutan:27,90;bolivia:-17,-65;bosniaandherzegovina:44,18;botswana:-22,24;brazil:-10,-52;brunei:5,115;bulgaria:43,25;burkinafaso:12,-2;burundi:-3,30;caboverde:16,-24;cambodia:12,105;cameroon:6,12;canada:57,-100;centralafricanrepublic:6,21;chad:15,19;chile:-33,-71;china:35,103;colombia:4,-73;congo:-1,15;costarica:10,-84;cotedivoire:7,-5;croatia:45,16;cuba:22,-79;cyprus:35,33;czechia:50,15;denmark:56,10;djibouti:11,43;dominicanrepublic:19,-70;ecuador:-1,-78;egypt:27,30;elsalvador:14,-89;equatorialguinea:2,10;eritrea:15,39;estonia:59,25;eswatini:-26,31;ethiopia:9,40;fiji:-18,178;finland:64,26;france:46,2;gabon:-1,12;gambia:13,-15;georgia:42,43;germany:51,10;ghana:8,-1;greece:39,22;guatemala:15,-90;guinea:10,-11;guineabissau:12,-15;guyana:5,-59;haiti:19,-72;honduras:15,-87;hungary:47,19;iceland:65,-18;india:21,78;indonesia:-2,118;iran:32,53;iraq:33,44;ireland:53,-8;israel:31,35;italy:42,12;jamaica:18,-77;japan:36,138;jordan:31,36;kazakhstan:48,67;kenya:0,38;kuwait:29,48;kyrgyzstan:41,75;laos:19,103;latvia:57,25;lebanon:34,36;lesotho:-29,28;liberia:6,-9;libya:27,17;lithuania:55,24;luxembourg:50,6;madagascar:-19,47;malawi:-13,34;malaysia:4,102;maldives:3,73;mali:17,-4;malta:36,14;mauritania:20,-10;mauritius:-20,57;mexico:23,-102;moldova:47,29;mongolia:46,105;montenegro:43,19;morocco:32,-6;mozambique:-18,35;myanmar:21,96;namibia:-22,17;nepal:28,84;netherlands:52,5;newzealand:-41,173;nicaragua:13,-85;niger:17,8;nigeria:10,8;northkorea:40,127;northmacedonia:41,22;norway:62,10;oman:21,57;pakistan:30,70;panama:9,-80;papuanewguinea:-6,144;paraguay:-23,-58;peru:-10,-76;philippines:13,122;poland:52,20;portugal:39,-8;qatar:25,51;romania:46,25;russia:60,90;rwanda:-2,30;saudiarabia:24,45;senegal:14,-14;serbia:44,21;sierraleone:8,-12;singapore:1,104;slovakia:49,19;slovenia:46,15;solomonislands:-9,160;somalia:6,46;southafrica:-29,24;southkorea:36,128;southsudan:7,30;spain:40,-4;srilanka:8,81;sudan:15,30;suriname:4,-56;sweden:62,15;switzerland:47,8;syria:35,38;tajikistan:39,71;tanzania:-6,35;thailand:15,101;timorleste:-9,126;togo:8,1;trinidadandtobago:11,-61;tunisia:34,9;turkey:39,35;turkmenistan:40,59;uganda:1,32;ukraine:49,32;unitedarabemirates:24,54;unitedkingdom:54,-2;unitedstates:39,-98;uruguay:-33,-56;uzbekistan:41,64;vanuatu:-16,167;venezuela:7,-66;vietnam:16,108;yemen:15,48;zambia:-14,28;zimbabwe:-19,30".split(";").forEach(s=>{const[k,v]=s.split(":");XY[k]=v.split(",").map(Number)});
+let M;
+function drawMap(){const w=cat==="india";M={a:w?67:-180,b:w?38:90,r:w?.3:1.3,f:w?.8:3.2};const m=$("#map");m.setAttribute("viewBox",w?"0 0 31 32":"0 0 360 180");
+ m.innerHTML=(w?[OUT.india]:OUT.world).map(s=>`<polygon points="${s.split(" ").map(q=>{const[x,y]=q.split(",");return(x-M.a)+","+(M.b-y)}).join(" ")}" fill="currentColor" fill-opacity=".1"/>`).join("")}
+function dot(p,i,n){const k=p.keys.find(x=>XY[x]);if(!k)return;const[la,lo]=XY[k];$("#map").insertAdjacentHTML("beforeend",`<circle cx="${lo-M.a}" cy="${M.b-la}" r="${M.r}" fill="var(--p${i})"/><text x="${lo-M.a+M.r*1.6}" y="${M.b-la+M.r/2}" font-size="${M.f}" fill="var(--p${i})">${n}</text>`)}
+/* ---------- profile (saved in this browser only) ---------- */
+const S0=()=>({p:0,w:0,st:0,bs:0,a:0,ps:0});
+let PF={name:"Player",av:"🙂",s:S0()};
+try{const t=JSON.parse(localStorage.getItem("atlas_pf"));if(t&&t.s)PF=t}catch(e){}
+const pfSave=()=>{try{localStorage.setItem("atlas_pf",JSON.stringify(PF))}catch(e){}};
+function hdr(){$("#pcard").textContent=`${PF.av} ${PF.name} · ${+PF.s.w||0} wins from ${+PF.s.p||0} matches · tap to edit profile`}
+function pst(){const s=PF.s,n=k=>+s[k]||0;$("#pst").innerHTML=`<div class="st"><div><b>${n("p")}</b>Matches</div><div><b>${n("w")}</b>Wins</div><div><b>${n("p")?Math.round(n("w")/n("p")*100):0}%</b>Win rate</div><div><b>${n("st")}</b>Current streak</div><div><b>${n("bs")}</b>Best streak</div><div><b>${n("a")}</b>Places named</div><div><b>${n("ps")}</b>Passes</div></div>`}
+function showProf(){$("#menu").hidden=1;$("#prof").hidden=0;$("#pn").value=PF.name;const a=$("#avs");a.innerHTML="";
+ ["🙂","😎","🤓","🦁","🐯","🦊","🐼","🦉","🚀","🌍","🧭","🏔️"].forEach(e=>{const b=document.createElement("button");b.textContent=e;b.className=e===PF.av?"on":"";b.onclick=()=>{PF.av=e;pfSave();showProf()};a.append(b)});pst()}
+$("#pn").oninput=()=>{PF.name=$("#pn").value.trim().slice(0,16)||"Player";pfSave()};
+function resetPF(b){if(b.dataset.c){PF.s=S0();pfSave();pst();hdr();b.textContent="Reset stats";delete b.dataset.c}else{b.dataset.c=1;b.textContent="Tap again to confirm"}}
+function rec(w){if(G.rec)return;G.rec=1;const s=PF.s;s.p=(+s.p||0)+1;if(!w){s.w=(+s.w||0)+1;s.st=(+s.st||0)+1;s.bs=Math.max(+s.bs||0,s.st)}else s.st=0;s.a=(+s.a||0)+G.pl[0].a;s.ps=(+s.ps||0)+G.pl[0].p;pfSave();hdr()}
+hdr();
+/* ---------- UI ---------- */
+function say(t){G.log.push(t);G.log=G.log.slice(-4);$("#log").innerHTML=G.log.map(x=>"<div>"+x+"</div>").join("")}
+function toast(t){$("#msg").textContent=t;clearTimeout(toast.t);toast.t=setTimeout(()=>$("#msg").textContent="",2200)}
+function ui(){[0,1].forEach(i=>{$("#h"+i).textContent="♥".repeat(Math.max(0,G.pl[i].l))||"–";$("#c"+i).classList.toggle("on",G.cur===i&&!G.over)});
+ const me=G.cur===0&&!G.paused&&!G.over,L=G.letter.toUpperCase();$("#letter").textContent=L;
+ $("#sub").textContent=G.paused?"Vote in progress…":G.ph==="steal"?(G.cur?"Bot is trying to steal…":`Steal it! Place starting with ${L} (+1 life)`):G.ph==="vote"?"Bot voted NO and must answer":G.cur?"Bot is thinking…":`Your turn: a place starting with ${L}`;
+ $("#in").disabled=!me;$("#go").disabled=!me;$("#pass").disabled=!(me&&G.ph==="turn");$("#disc").disabled=!(me&&G.ph==="turn"&&G.pl[0].c);
+ $("#disc").textContent="Discussion ("+G.pl[0].c+")";$("#rd").textContent=`Round ${G.round} · ${tt()} s turns · ${P.filter(p=>p.used).length}/${P.length} places used${G.dead.size?" · Cancelled: "+[...G.dead].join(", ").toUpperCase():""}`}
+setInterval(()=>{if(!G||G.over||G.paused||$("#game").hidden)return;const r=(G.dl-Date.now())/1000;
+ $("#bar").style.width=Math.max(0,r/G.lim*100)+"%";const s=Math.ceil(Math.max(0,r));$("#tm").textContent=s+" s";const key=G.dl+":"+s;if(G.cur===0&&s>0&&s<=3&&G.bk!==key){G.bk=key;beep()}if(r<=0)fail(G.cur)},100);
+$("#go").onclick=()=>{submit(0,$("#in").value);$("#in").value=""};
+$("#in").onkeydown=e=>{if(e.key==="Enter")$("#go").click()};
+$("#in").onpaste=e=>e.preventDefault();$("#in").ondrop=e=>e.preventDefault();
+$("#pass").onclick=()=>pass(0);$("#disc").onclick=disc;
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&G&&!G.over&&G.cur===0&&G.ph==="turn"&&!G.paused){G.away++;if(G.away>1)fail(0,"left the app twice");else toast("Warning: leaving the app again forfeits your turn")}});
+function emo(e){if(Date.now()<ec)return;ec=Date.now()+3000;$("#b0").textContent=e;setTimeout(()=>$("#b0").textContent="",2000);
+ if(Math.random()<.4)setTimeout(()=>{$("#b1").textContent="😏";setTimeout(()=>$("#b1").textContent="",2000)},900)}
+["😀","😂","😮","😡","👍","🔥"].forEach(e=>{const b=document.createElement("button");b.textContent=e;b.onclick=()=>emo(e);$("#emo").append(b)});
+</script></body></html>
